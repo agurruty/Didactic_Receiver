@@ -87,6 +87,9 @@ def parse_word(text):
 
 
 def assemble_navigation(raw):
+    if raw.get("navigation") == "F/NAV":
+        from .fnav import assemble
+        return assemble(raw)
     messages, groups, complete = [], {}, []
     for page in sorted(raw.get("pages", []), key=lambda p: p["time_start_s"]):
         if page.get("crc_ok") is not True:

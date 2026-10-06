@@ -21,9 +21,9 @@ def position_figures(summary, ranges, output):
         xlabel='Time from recording start [s]',ylabel='Raw pseudorange [thousand km]')
     if prns: axes[0,0].legend(ncol=4,fontsize=8)
     if good:
-        last=good[-1]; at=[r for r in ranges if r['receive_sample']==last['receive_sample'] and r['used_in_accepted_solution']]
+        last=good[-1]; at=[r for r in ranges if r['receive_time_s']==last['receive_time_s'] and r['used_in_accepted_solution']]
         terms=[('Clock + relativity',lambda r:C*(r['clock_polynomial_s']+r['relativity_s'])),
-               ('−BGD',lambda r:-C*r['bgd_e1_e5b_s']),('−hardware',lambda r:-r['hardware_delay_m']),
+               ('−scaled BGD',lambda r:-C*r.get('bgd_factor',1.)*r.get('bgd_s',r.get('bgd_e1_e5b_s',0.))),('−hardware',lambda r:-r['hardware_delay_m']),
                ('−troposphere',lambda r:-r['tropo_m']),('−ionosphere',lambda r:-r['iono_m']),
                ('−Shapiro',lambda r:-r['shapiro_m'])]
         values=np.array([[fun(r) for r in at] for _,fun in terms])

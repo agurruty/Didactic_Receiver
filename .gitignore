@@ -21,3 +21,12 @@ __pycache__/
 *.npy
 .env
 .env.*
+
+# Multi-band receiver, engineering documentation and regression tests
+!/galileo.py
+!/docs/
+/docs/*
+!/docs/*.md
+!/tests/
+/tests/*
+!/tests/*.py

@@ -114,20 +114,22 @@ class BroadcastIonosphere:
             for wt, pages in ((5,c['health_pages']), (6,c['utc_pages'])):
                 for p in pages:
                     health=p if wt==5 else min(c['health_pages'],key=lambda h:abs(h['boundary_sample']-p['boundary_sample']))
-                    if health['decoded']['E1B_HS']!=0 or health['decoded']['E1B_DVS']!=0: continue
-                    if abs(health['boundary_sample']-p['boundary_sample'])/FS>14400: continue
-                    self.pages[wt].append(dict(prn=c['prn'],sample=p['boundary_sample'],decoded=p['decoded']))
+                    prefix={'e1':'E1B','e5a':'E5a','e5b':'E5b'}[c.get('band','e1')]
+                    if health['decoded'][prefix+'_HS']!=0 or health['decoded'][prefix+'_DVS']!=0: continue
+                    rate=c.get('sample_rate_sps',FS)
+                    if abs(health['boundary_sample']-p['boundary_sample'])/rate>14400: continue
+                    self.pages[wt].append(dict(prn=c['prn'],sample=p['boundary_sample'],time_s=p['boundary_sample']/rate,decoded=p['decoded']))
         for wt in (5,6):
-            self.pages[wt].sort(key=lambda p:(p['sample'],p['prn']))
+            self.pages[wt].sort(key=lambda p:(p['time_s'],p['prn']))
             if not self.pages[wt]: raise ValueError(f'Broadcast ionosphere needs CRC-valid WT{wt} pages with sample timing')
 
     def at(self,sample,fs):
         selected=[]
         for wt in (5,6):
-            before=[p for p in self.pages[wt] if p['sample']<=sample]
+            before=[p for p in self.pages[wt] if p['time_s']<=sample/fs]
             # Offline recordings may use their earliest decoded page to cover the initial interval.
             p=before[-1] if before else self.pages[wt][0]
-            age=(sample-p['sample'])/fs
+            age=sample/fs-p['time_s']
             if abs(age)>14400: raise ValueError(f'Broadcast ionosphere WT{wt} older than four hours')
             selected.append((p,age))
         (five,age5),(six,age6)=selected

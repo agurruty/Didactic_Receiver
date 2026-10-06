@@ -118,6 +118,12 @@ def design(observations, state, config, corrections=True):
                 lat,lon,_=geodetic(receiver)
                 iono_details=broadcast_delay(lat,lon,el,az,o['receiver_tow_unwrapped_s']-bias/C,o['broadcast_iono'],config)
                 iono,isigma=iono_details['iono_m'],iono_details['iono_sigma_m']
+            frequency_scale=(1575.42e6/o.get('frequency_hz',1575.42e6))**2
+            iono*=frequency_scale; isigma*=frequency_scale
+            if iono_details:
+                iono_details.update(iono_m=iono,iono_sigma_m=isigma)
+            if o.get('ionosphere_free'):
+                iono=0.; isigma=config.get('higher_order_iono_sigma_m',.1)
             if o.get('comparison_iono_sigma_m') is not None: isigma=o['comparison_iono_sigma_m']
             if o.get('external_iono_m') is not None:
                 iono, isigma = o['external_iono_m'], o['external_iono_sigma_m']
@@ -127,7 +133,7 @@ def design(observations, state, config, corrections=True):
         residual = corrected-rho-bias
         # A stochastic model, not a calibrated tracking accuracy claim.
         scale = max(math.sin(max(el,math.radians(5))), .2)
-        sigma = math.sqrt((config.get('code_sigma_m',10.)/scale)**2 + o['sisa_m']**2 + tsigma**2 + isigma**2 + o.get('differential_delay_sigma_m',0.)**2)
+        sigma = math.sqrt((o.get('code_sigma_m',config.get('code_sigma_m',10.))/scale)**2 + o['sisa_m']**2 + tsigma**2 + isigma**2 + o.get('differential_delay_sigma_m',0.)**2)
         rows.append(np.r_[(receiver-sat)/rho,1.])
         residuals.append(residual); sigmas.append(sigma)
         details.append(dict(prn=o['prn'], geometric_range_m=rho, residual_m=residual,

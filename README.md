@@ -1,4 +1,20 @@
-# Galileo E1 · From samples to a position on Earth
+# Galileo E1 + E5 · From samples to a position on Earth
+
+The `feature/galileo-e5` branch adds signal-aware **E5a, E5b and synchronized
+E1+E5 capture/processing** through `python galileo.py`. Start with the
+[E1/E5 guide](docs/E5_RECEIVER.md) for hardware routing, storage requirements,
+commands, official ESA/EUSPA references and the software-validation boundary.
+E5 is experimental pending real-hardware and real-signal validation; no
+centimetre-level or joint AltBOC performance is claimed.
+
+```bash
+python galileo.py capture --bands e1+e5b --duration 120 \
+  --output recordings/e1-e5b-001 --plan
+python galileo.py --help
+```
+
+The original E1 walkthrough below remains valid for 12.5 MS/s E1 recordings.
+New multi-band recordings use per-band subdirectories and the new CLI.
 
 Each numbered script answers one receiver question, saves its numerical evidence, and produces a figure. The live-tested correlation, pilot tracking, secondary-code synchronization, FEC and orbit algorithms live in `receiver/`; the entry scripts stay small. Use `--help` for the parameters and `--no-show` to save figures without opening windows. Figures are exported as PNG and PDF.
 

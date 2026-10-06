@@ -212,7 +212,7 @@ def position_map(summary, output, source='osm', width_m=1200., cache=None, refer
     fig = plt.figure(figsize=(16, 11), facecolor='#f8f9f6')
     fig.text(.045, .955, '05  /  THE SIGNAL FINDS A PLACE', color=TEAL, fontsize=11, weight='bold', va='top')
     fig.text(.045, .915, 'From the antenna to the map', color=INK, fontsize=28, weight='bold', va='top')
-    fig.text(.045, .864, 'Recorded Galileo E1 · estimated antenna location · final accepted epoch', fontsize=12, color=MUTED)
+    fig.text(.045, .864, f"Recorded Galileo {summary.get('mode','e1').upper()} · estimated antenna location · final accepted epoch", fontsize=12, color=MUTED)
     ax = fig.add_axes([.045, .185, .605, .645])
     decorate_map(ax, local, lat, mosaics[0], source)
     ax.add_patch(Polygon(ellipse, closed=True, facecolor=GOLD, alpha=.17, edgecolor='none', zorder=3))

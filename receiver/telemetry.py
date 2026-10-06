@@ -156,7 +156,7 @@ def build_trellis(poly_reverse: bool = False):
     return next_state, outputs
 
 
-def viterbi_soft(symbols: np.ndarray, poly_reverse: bool = False):
+def viterbi_soft(symbols: np.ndarray, poly_reverse: bool = False, expected_symbols: int = 240):
     """
     Soft Viterbi decoder for 240 input soft symbols -> 120 decoded bits.
 
@@ -170,8 +170,8 @@ def viterbi_soft(symbols: np.ndarray, poly_reverse: bool = False):
     The 6 zero tail bits terminate the encoder, therefore state 0 is used as
     the final traceback state.
     """
-    if len(symbols) != CODED_SYMBOLS:
-        raise ValueError("Viterbi expects exactly 240 soft symbols")
+    if len(symbols) != expected_symbols or len(symbols) % 2:
+        raise ValueError(f"Viterbi expects exactly {expected_symbols} soft symbols")
     ns, out = build_trellis(poly_reverse)
     pairs = symbols.reshape(-1, 2)
     steps = len(pairs)

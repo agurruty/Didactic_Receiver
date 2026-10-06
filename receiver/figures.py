@@ -7,6 +7,7 @@ from .common import FS, TEAL, GOLD, RED, MUTED, heading, finish
 
 
 def raw_signal(raw, meta, output):
+    FS = float(meta.get("sample_rate_sps", meta.get("raw_sample_rate_sps", 12_500_000)))
     mm = np.memmap(raw, dtype="<i2", mode="r").reshape(-1, 2)
     total, sq, clipped = np.zeros(2), np.zeros(2), 0
     times, levels, clips = [], [], []
@@ -49,7 +50,7 @@ def raw_signal(raw, meta, output):
         ax[0, 1].plot(np.fft.fftshift(f) / 1e6, 10 * np.log10(np.maximum(np.fft.fftshift(psd), 1e-30)))
     ax[0, 1].set(
         title="02  Energy across the receiver bandwidth\nWelch PSD of the initial inspection window",
-        xlabel="Offset from 1575.42 MHz [MHz]",
+        xlabel=f"Offset from {meta.get('actual_center_frequency_hz', 1575.42e6)/1e6:g} MHz [MHz]",
         ylabel="Power density [dB counts²/Hz]",
     )
     bins = np.linspace(-32768, 32768, 129)
@@ -164,7 +165,12 @@ def acquisition_figure(rows, acq, args, output):
     finish(fig, output / f"01_acquisition_E{acq['prn']:02d}")
 
 
-def tracking_figures(acq, sync, d, output):
+def tracking_figures(acq, sync, d, output, signal=None, sample_rate=12_500_000):
+    chip_rate = signal.chip_rate if signal else 1_023_000
+    period = signal.period if signal else .004
+    secondary_length = signal.secondary_length if signal else 25
+    nominal_samples = round(sample_rate * period)
+    label = signal.name.upper() if signal else "E1"
     t = d["time"]
     prn = acq["prn"]
     fig, ax = plt.subplots(3, 2, figsize=(15, 12))
@@ -177,7 +183,7 @@ def tracking_figures(acq, sync, d, output):
         ("cn0_dbhz", "How much carrier rises above noise?", "Estimated C/N₀ [dB-Hz]", 1),
     ]
     for a, (key, title, label, scale) in zip(ax.flat, signals):
-        y = d[key] * scale - (1_023_000 if key == "code_rate_chips_s" else 0)
+        y = d[key] * scale - (chip_rate if key == "code_rate_chips_s" else 0)
         a.plot(t, y)
         a.set(title=title, xlabel="Time since tracking began [s]", ylabel=label)
         a.grid(True)
@@ -222,7 +228,7 @@ def tracking_figures(acq, sync, d, output):
     ax[0, 2].plot(t[:n], d["prompt"].real[:n], label="I")
     ax[0, 2].plot(t[:n], d["prompt"].imag[:n], label="Q", alpha=0.65)
     ax[0, 2].set(
-        title="The first two seconds of E1-B symbols",
+        title=f"Initial {label} data correlations",
         xlabel="Tracking time [s]",
         ylabel="Prompt correlation [counts]",
     )
@@ -242,11 +248,11 @@ def tracking_figures(acq, sync, d, output):
         ylabel="Magnitude / median prompt",
     )
     ax[1, 0].legend(ncol=5, fontsize=8)
-    ax[1, 1].plot(t, d["epoch_samples"] - 50000, lw=0.7)
+    ax[1, 1].plot(t, d["epoch_samples"] - nominal_samples, lw=0.7)
     ax[1, 1].set(
-        title="Code periods need not contain 50,000 samples",
+        title=f"Code periods need not contain {nominal_samples:,} samples",
         xlabel="Tracking time [s]",
-        ylabel="Epoch length − 50,000 [samples]",
+        ylabel=f"Epoch length − {nominal_samples:,} [samples]",
     )
     ax[1, 2].plot(t, d["fll_error_hz"])
     ax[1, 2].set(
@@ -260,7 +266,7 @@ def tracking_figures(acq, sync, d, output):
         fig,
         "02",
         "From a spreading code to data symbols",
-        f"E{prn:02d}  ·  secondary shift {sync['secondary_shift']}/25  ·  residual correction {sync['residual_hz']:+.2f} Hz",
+        f"E{prn:02d}  ·  secondary shift {sync['secondary_shift']}/{secondary_length}  ·  residual correction {sync['residual_hz']:+.2f} Hz",
         "Constellation color progresses from early (purple) to late (yellow); all samples and transients are shown.\nA concentrated pilot and two data clusters support lock; navigation CRC is the next independent check. Absolute sample indices are preserved.",
     )
     finish(fig, output / "02_tracking_symbols")
