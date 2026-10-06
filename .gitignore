@@ -1,0 +1,23 @@
+# Source-only allowlist. Add new source/config paths explicitly.
+/*
+!/.gitignore
+!/.gitmodules
+!/README.md
+!/requirements.txt
+!/run_receiver.sh
+!/[0-9][0-9]_galileo_e1_*.py
+!/receiver/
+!/GNSS-DSP-tools/
+/receiver/*
+!/receiver/*.py
+
+# Never publish captures, results, caches, or local credentials.
+recordings/
+runs/
+__pycache__/
+*.py[cod]
+*.sc16
+*.npz
+*.npy
+.env
+.env.*

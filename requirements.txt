@@ -1,0 +1,6 @@
+# Runtime dependencies; UHD is installed separately for hardware capture.
+numpy
+scipy
+matplotlib
+pillow
+cycler
